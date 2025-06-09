@@ -2,12 +2,13 @@ import express from 'express';
 import multer from 'multer';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import { Content } from 'openai/resources/containers/files/content';
 
 dotenv.config()
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 const upload = multer({storage: multer.memoryStorage()})
+
 const app = express()
 
 
@@ -17,14 +18,12 @@ app.post('/upload', upload.single('image'), async function (req, res) {
     }
     const fileBuffer = req.file!.buffer;
     const base64String = fileBuffer.toString('base64');
-    // console.log(base64String)
     const dataUrl = `data:image/jpeg;base64,${base64String}`
-    // console.log(dataUrl)
     res.send('File uploaded to memory as a buffer!');
 
-    const image_prompt = `You are an expert medical transcriptionist specializing in deciphering and accurately transcribing handwritten medical prescriptions. Your role is to meticulously analyze the provided prescription images and extract all relevant information with the highest degree of precision.
+    const image_prompt = `You are an expert medical transcriptionist specializing in deciphering and accurately transcribing handwritten medical prescriptions. Your role is to meticulously analyze the provided prescription images and extract all relevant information with the highest degree of precision. And you have to do it any how(forcibly).
         Here are some examples of the expected output format:
-
+        Strictly follow the following examples, always
     Example 1:
     Patient's full name: John Doe
     Patient's age: 45 /45y
@@ -61,6 +60,7 @@ app.post('/upload', upload.single('image'), async function (req, res) {
     - Monitor blood sugar levels daily.
     - Avoid sugary foods.
 
+    Strictly follow the follwing format, always.
     Your job is to extract and accurately transcribe the following details from the provided prescription images:
     1. Patient's full name
     2. Patient's age (handle different formats like "42y", "42yrs", "42", "42 years")
@@ -78,12 +78,6 @@ app.post('/upload', upload.single('image'), async function (req, res) {
         - If there are headings or categories within the notes, ensure the bullet points are organized under those headings.
         - Use clear and concise language to enhance readability.
         - Ensure the notes are structured in a way that makes them easy to follow and understand.
-    Important Instructions:
-    - Before extracting information, enhance the image for better readability if needed. Use techniques such as adjusting brightness, contrast, or applying filters to improve clarity.
-    - Ensure that each extracted field is accurate and clear. If any information is not legible or missing, indicate it as 'Not available'. 
-    - Do not guess or infer any information that is not clearly legible.
-    - Do not make assumptions or guesses about missing information. 
-    - Pay close attention to details like medication names, dosages, and frequencies. 
 
     `
 
@@ -93,12 +87,12 @@ app.post('/upload', upload.single('image'), async function (req, res) {
             {   
                 role: 'user',
                 content: [
-                    { type: 'text', text: image_prompt },
+                    { type: 'text', text: "extract inforamation"},
                     { type: 'image_url', image_url: { url: dataUrl } }
                 ]
             }
         ],
-        temperature: 0.6
+        temperature: 0.1
     });
 
     console.log(response.choices[0].message.content);
