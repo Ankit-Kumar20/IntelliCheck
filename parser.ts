@@ -1,8 +1,8 @@
 import express from 'express';
 import multer from 'multer';
 import OpenAI from 'openai';
+
 import dotenv from 'dotenv';
-import { Content } from 'openai/resources/containers/files/content';
 
 dotenv.config()
 
@@ -11,6 +11,7 @@ const upload = multer({storage: multer.memoryStorage()})
 
 const app = express()
 
+app.use(express.json())
 
 app.post('/upload', upload.single('image'), async function (req, res) {
     if (!req.file) {
