@@ -1,19 +1,16 @@
 import express from 'express';
 import multer from 'multer';
 import OpenAI from 'openai';
-
 import dotenv from 'dotenv';
-
+import llm from './llm'
 dotenv.config()
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const upload = multer({storage: multer.memoryStorage()})
 
-const app = express()
+const router = express.Router()
 
-app.use(express.json())
 
-app.post('/upload', upload.single('image'), async function (req, res) {
+router.post('/upload', upload.single('image'), async function (req, res) {
     if (!req.file) {
         res.status(400).send('No file uploaded.');
     }
@@ -82,7 +79,7 @@ app.post('/upload', upload.single('image'), async function (req, res) {
 
     `
 
-    const response = await openai.chat.completions.create({
+    const response = await llm.chat.completions.create({
         model: 'gpt-4o',
         messages: [
             {   
@@ -99,6 +96,4 @@ app.post('/upload', upload.single('image'), async function (req, res) {
     console.log(response.choices[0].message.content);
 })
 
-app.listen(process.env.PORT, ()=>{
-    console.log(`server is running`)
-})
+export default router

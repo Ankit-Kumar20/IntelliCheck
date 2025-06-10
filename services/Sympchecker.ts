@@ -1,19 +1,17 @@
 import express from 'express';
 import { tavily } from '@tavily/core';
 import OpenAI from 'openai'
+import llm from './llm'
 
 import dotenv from 'dotenv'
 
 dotenv.config();
 
-const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY})
+const tvly = tavily({ apiKey: process.env.TRAVILY_API_KEY });
 
-const app = express();
+const router = express.Router();
 
-app.use(express.json())
-
-app.post('/search', async(req, res)=>{
+router.post('/search', async(req, res)=>{
     const { query, search_type } = req.body;
     const response = await tvly.search(query, {searchDepth: search_type, maxResults: 5});
     var contents = [];
@@ -27,6 +25,8 @@ app.post('/search', async(req, res)=>{
 
         -If the user directly sprecifies the disease, then you reply in a symphathetic manner.
 
+        -Always try to answer in a bullet point fashion.
+
         -At the end you should always tell the patient to seek the advice of a regular professional practioner.
 
         -If the user asks about anything **outside of symptoms or health-related issues**, respond with: "I'm sorry, that's not my domain. I'm here only to help with health-related symptom checking."
@@ -34,13 +34,14 @@ app.post('/search', async(req, res)=>{
         -Do not attempt to answer questions unrelated to physical or mental health symptoms. Always stay on topic.
     `
 
-    const llm_response = await openai.chat.completions.create({
+    const llm_response = await llm.chat.completions.create({
         model: 'gpt-4o',
         messages: [
             {
                 role: 'system',
                 content: [
-                    { type: 'text', text: system_prompt}
+                    { type: 'text', text: system_prompt},
+                    { type: 'text', text: contents.toString()}
                 ]
             },
             {
@@ -50,12 +51,10 @@ app.post('/search', async(req, res)=>{
                 ]
             }
         ],
-        temperature: 0.2
+        temperature: 0.1
     })
 
     res.status(201).send(llm_response.choices[0].message.content);
 })
 
-app.listen(process.env.PORT, ()=>{
-    console.log(`server is ruunning at port ${process.env.PORT}`)
-})
+export default router
