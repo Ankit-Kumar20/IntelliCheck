@@ -1,1 +1,1 @@
-# prescription-parser
+# IntelliCheck
